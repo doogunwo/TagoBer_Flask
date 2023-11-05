@@ -191,6 +191,4 @@ def sendLog():
 if __name__ == '__main__':
 
     models = trains()
-    app.run(host='192.168.35.135', port=5000, debug=True)
-
-
+    app.run(host='192.168.1.192', port=5000, debug=True)

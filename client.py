@@ -1,12 +1,10 @@
 import pickle
 import time
-
 import cv2
 import requests
 
-
 def start():
-    url  ="http://14.42.240.116:82/start"
+    url  ="http://14.49.83.210:5000/start"
     #http://14.42.240.116:82/start
     #처음 실행했을 때 모델 로드하도록하자
     response = requests.post(url)
@@ -15,8 +13,11 @@ def start():
         print(res)
 
 def streaming():
+    if not camera.isOpened():
+        print("카메라를 열 수 없습니다.")
+        exit()
 
-    url = "http://14.42.240.116:82/video_feed"
+    url = "http://14.49.83.210:5000/video_feed"
     try:
         while True:
             print(time.time())#로그용
