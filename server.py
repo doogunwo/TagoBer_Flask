@@ -22,53 +22,54 @@ conn = mysql.connector.connect(
     database='sys'
 )
 
-
 def train(name):
-    data_path = 'Dataset/' + name + '/'
+    data_path = os.path.join('Dataset', name)
     # 파일만 리스트로 만듬
-    face_pics = [f for f in listdir(data_path) if isfile(join(data_path, f))]
+    face_pics = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f))]
 
     Training_Data, Labels = [], []
 
-    for i, files in enumerate(face_pics):
-        image_path = data_path + face_pics[i]
-        images = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    for i, image_filename in enumerate(face_pics):
+        image_path = os.path.join(data_path, image_filename)
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        
         # 이미지가 아니면 패스
-        if images is None:
-            continue
-        Training_Data.append(np.asarray(images, dtype=np.uint8))
-        Labels.append(i)
+        if image is not None:
+            image = cv2.resize(image, (200, 200))
+            Training_Data.append(np.asarray(image, dtype=np.uint8))
+            Labels.append(i)
+    
     if len(Labels) == 0:
         print("There is no data to train.")
         return None
+
     Labels = np.asarray(Labels, dtype=np.int32)
     # 모델 생성
-    model = cv2.face.LBPHFaceRecognizer_create()
+    model = cv2.face_LBPHFaceRecognizer.create()
     # 학습
-    model.train(np.asarray(Training_Data), np.asarray(Labels))
+    model.train(Training_Data, Labels)
     print(name + " : Model Training Complete!!!!!")
 
     # 학습 모델 리턴
     return model
 
 def trains():
-    # faces 폴더의 하위 폴더를 학습
     data_path = 'Dataset/'
-    # 폴더만 색출
-    model_dirs = [f for f in listdir(data_path) if isdir(join(data_path, f))]
+    # 폴더만 리스트로 만듬
+    model_dirs = [f for f in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, f))]
 
     # 학습 모델 저장할 딕셔너리
     models = {}
     # 각 폴더에 있는 얼굴들 학습
     for model in model_dirs:
-        print('model :' + model)
+        print('model: ' + model)
         # 학습 시작
         result = train(model)
         # 학습이 안되었다면 패스!
         if result is None:
             continue
         # 학습되었으면 저장
-        print('model2 :' + model)
+        print('model2: ' + model)
         models[model] = result
 
     # 학습된 모델 딕셔너리 리턴
@@ -116,7 +117,7 @@ def start():
     response = {'result': res}
     return Response(response=pickle.dumps(response), status=200, mimetype='application/octet-stream')
 
-@app.route('/Updata', methods=['POST'])
+@app.route('/update', methods=['POST'])
 def update():
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     cursor = conn.cursor()
@@ -139,7 +140,7 @@ def update():
                     print("1")
 
                 cv2.imwrite(os.path.join(root, row[0]) + "/" + row[0] + "_og.jpg", img_og)
-
+                
 
             else:
                 pass
@@ -151,6 +152,8 @@ def update():
     cursor.close()
     conn.close()
 
+    response_data = {"message": "Update successful"}
+    return Response(response=pickle.dumps(response_data), status=200, mimetype='application/octet-stream')
 
 @app.route('/video_feed', methods=['POST'])
 def video_feed():
@@ -192,3 +195,5 @@ if __name__ == '__main__':
 
     models = trains()
     app.run(host='192.168.1.192', port=5000, debug=True)
+
+
